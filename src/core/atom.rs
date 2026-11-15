@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
-pub(super) struct Atom {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Atom {
     pub(super) name: String,
 }

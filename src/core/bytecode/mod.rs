@@ -11,6 +11,7 @@ const PUSH_ATOM: u8 = 0x03;
 const PUSH_NULL: u8 = 0x04;
 const PUSH_TRUE: u8 = 0x05;
 const PUSH_FALSE: u8 = 0x06;
+const LOAD_VARIABLE: u8 = 0x07;
 
 pub(super) struct Bytecode {
     constants: Vec<Constant>,

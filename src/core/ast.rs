@@ -9,5 +9,6 @@ pub(super) enum AstNode {
     AtomLiteral(Atom),
     NullLiteral,
     BooleanLiteral(bool),
+    Variable(String),
     Concat(Vec<AstNode>),
 }

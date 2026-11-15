@@ -1,16 +1,16 @@
 use super::{
     Error, ErrorKind,
     ast::{Ast, AstNode},
-    lexer::{Lexer, TokenKind},
+    lexer::{Lexer, Token, TokenKind},
 };
 
-pub(super) struct Parser<'a> {
+pub(crate) struct Parser<'a> {
     source: &'a str,
     position: usize,
 }
 
 impl<'a> Parser<'a> {
-    pub(super) fn new(source: &'a str) -> Self {
+    pub(crate) fn new(source: &'a str) -> Self {
         Self {
             source,
             position: 0,
@@ -43,16 +43,10 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self, start: usize) -> Result<AstNode, Error> {
         let mut lexer = Lexer::new(self.source, self.position);
         let token = lexer.next_token()?;
-        let node = match token.kind {
-            TokenKind::StringLiteral(value) => AstNode::StringLiteral(value),
-            TokenKind::AtomLiteral(atom) => AstNode::AtomLiteral(atom),
-            TokenKind::NullLiteral => AstNode::NullLiteral,
-            TokenKind::BooleanLiteral(value) => AstNode::BooleanLiteral(value),
-            TokenKind::EndOfInput => return Err(Self::error("Unterminated interpolation", start)),
-            _ => {
-                return Err(Self::error("Expected a literal", token.offset));
-            }
-        };
+        if matches!(token.kind, TokenKind::EndOfInput) {
+            return Err(Self::error("Unterminated interpolation", start));
+        }
+        let node = Self::parse_node(token)?;
         let token = lexer.next_token()?;
         match token.kind {
             TokenKind::CloseParen => {
@@ -61,6 +55,50 @@ impl<'a> Parser<'a> {
             }
             TokenKind::EndOfInput => Err(Self::error("Unterminated interpolation", start)),
             _ => Err(Self::error("Expected closing parenthesis", token.offset)),
+        }
+    }
+
+    pub(crate) fn parse_identifier(self) -> Result<String, Error> {
+        let mut lexer = Lexer::new(self.source, 0);
+        let token = lexer.next_token()?;
+        match token.kind {
+            TokenKind::Identifier(name) if name == self.source => {
+                Self::expect_end(&mut lexer)?;
+                Ok(name)
+            }
+            _ => Err(Self::error("Expected an identifier", token.offset)),
+        }
+    }
+
+    pub(super) fn parse_literal(self) -> Result<Ast, Error> {
+        let mut lexer = Lexer::new(self.source, 0);
+        let token = lexer.next_token()?;
+        let offset = token.offset;
+        let root = Self::parse_node(token)?;
+        if matches!(root, AstNode::Variable(_)) {
+            return Err(Self::error("Expected a literal", offset));
+        }
+        Self::expect_end(&mut lexer)?;
+        Ok(Ast { root })
+    }
+
+    fn expect_end(lexer: &mut Lexer<'_>) -> Result<(), Error> {
+        let token = lexer.next_token()?;
+        if matches!(token.kind, TokenKind::EndOfInput) {
+            Ok(())
+        } else {
+            Err(Self::error("Unexpected trailing content", token.offset))
+        }
+    }
+
+    fn parse_node(token: Token) -> Result<AstNode, Error> {
+        match token.kind {
+            TokenKind::StringLiteral(value) => Ok(AstNode::StringLiteral(value)),
+            TokenKind::AtomLiteral(atom) => Ok(AstNode::AtomLiteral(atom)),
+            TokenKind::NullLiteral => Ok(AstNode::NullLiteral),
+            TokenKind::BooleanLiteral(value) => Ok(AstNode::BooleanLiteral(value)),
+            TokenKind::Identifier(name) => Ok(AstNode::Variable(name)),
+            _ => Err(Self::error("Expected an expression", token.offset)),
         }
     }
 

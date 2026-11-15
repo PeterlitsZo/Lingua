@@ -2,14 +2,33 @@ use std::borrow::Cow;
 
 use super::atom::Atom;
 
-pub(super) enum Value<'a> {
+#[derive(Clone)]
+pub(crate) enum Value<'a> {
     String(Cow<'a, str>),
-    Atom(&'a Atom),
+    Atom(Cow<'a, Atom>),
     Null,
     Boolean(bool),
 }
 
 impl Value<'_> {
+    pub(crate) fn into_owned(self) -> Value<'static> {
+        match self {
+            Self::String(value) => Value::String(Cow::Owned(value.into_owned())),
+            Self::Atom(atom) => Value::Atom(Cow::Owned(atom.into_owned())),
+            Self::Null => Value::Null,
+            Self::Boolean(value) => Value::Boolean(value),
+        }
+    }
+
+    pub(super) fn borrowed(&self) -> Value<'_> {
+        match self {
+            Self::String(value) => Value::String(Cow::Borrowed(value)),
+            Self::Atom(atom) => Value::Atom(Cow::Borrowed(atom)),
+            Self::Null => Value::Null,
+            Self::Boolean(value) => Value::Boolean(*value),
+        }
+    }
+
     pub(super) fn append_text(&self, output: &mut String) {
         match self {
             Self::Null => output.push_str("null"),

@@ -1,18 +1,23 @@
 use std::borrow::Cow;
 
-use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE};
-use crate::core::{Error, ErrorKind, value::Value};
+use super::{
+    Bytecode, CONCAT, Constant, LOAD_VARIABLE, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING,
+    PUSH_TRUE,
+};
+use crate::core::{Environment, Error, ErrorKind, value::Value};
 
 pub(in crate::core) struct BytecodeRunner<'a> {
     bytecode: &'a Bytecode,
+    environment: &'a Environment,
     pc: usize,
     stack: Vec<Value<'a>>,
 }
 
 impl<'a> BytecodeRunner<'a> {
-    pub(in crate::core) fn new(bytecode: &'a Bytecode) -> Self {
+    pub(in crate::core) fn new(bytecode: &'a Bytecode, environment: &'a Environment) -> Self {
         Self {
             bytecode,
+            environment,
             pc: 0,
             stack: Vec::new(),
         }
@@ -23,7 +28,7 @@ impl<'a> BytecodeRunner<'a> {
             let offset = self.pc;
             self.pc += 1;
             match opcode {
-                PUSH_STRING | PUSH_ATOM => {
+                PUSH_STRING | PUSH_ATOM | LOAD_VARIABLE => {
                     let index = self.read_operand(offset)? as usize;
                     let value = self.bytecode.constants.get(index).ok_or_else(|| {
                         Self::invalid_bytecode("Constant index out of bounds", offset)
@@ -33,7 +38,12 @@ impl<'a> BytecodeRunner<'a> {
                         (PUSH_STRING, Constant::String(value)) => {
                             Value::String(Cow::Borrowed(value))
                         }
-                        (PUSH_ATOM, Constant::Atom(atom)) => Value::Atom(atom),
+                        (PUSH_ATOM, Constant::Atom(atom)) => Value::Atom(Cow::Borrowed(atom)),
+                        (LOAD_VARIABLE, Constant::String(name)) => self
+                            .environment
+                            .get(name)
+                            .map(Value::borrowed)
+                            .unwrap_or(Value::Null),
                         _ => {
                             return Err(Self::invalid_bytecode(
                                 "Constant type does not match opcode",
