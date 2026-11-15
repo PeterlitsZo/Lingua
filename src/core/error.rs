@@ -9,6 +9,7 @@ pub enum ErrorKind {
     Lex,
     Parse,
     Compile,
+    Runtime,
 }
 
 impl fmt::Display for ErrorKind {
@@ -21,6 +22,7 @@ impl fmt::Display for ErrorKind {
             Self::Lex => "Lex Error",
             Self::Parse => "Parse Error",
             Self::Compile => "Compile Error",
+            Self::Runtime => "Runtime Error",
         })
     }
 }

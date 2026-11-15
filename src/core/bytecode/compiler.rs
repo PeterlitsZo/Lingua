@@ -1,6 +1,6 @@
 use super::{
-    Bytecode, CONCAT, Constant, DUP, EQUAL, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP, PUSH_ATOM,
-    PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
+    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP,
+    PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
 };
 use crate::core::{
     Error, ErrorKind,
@@ -42,6 +42,10 @@ impl BytecodeCompiler {
             }
             AstNode::Variable(name) => {
                 self.emit_constant(LOAD_VARIABLE, Constant::String(name))?;
+            }
+            AstNode::Include(path) => {
+                self.compile_node(*path)?;
+                self.bytecode.code.push(INCLUDE);
             }
             AstNode::Match { value, arms } => self.compile_match(*value, arms)?,
             AstNode::Concat(nodes) => {

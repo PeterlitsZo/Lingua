@@ -15,3 +15,5 @@ for LANG in zh_CN zh_TW ja_JP ko_KR es_ES fr_FR de_DE pt_BR en_US; do
         fi
     done
 done
+
+./target/debug/lingua README.md.lingua

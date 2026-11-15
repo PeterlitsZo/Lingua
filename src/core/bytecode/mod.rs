@@ -17,6 +17,7 @@ const EQUAL: u8 = 0x09;
 const JUMP_IF_FALSE: u8 = 0x0A;
 const POP: u8 = 0x0B;
 const JUMP: u8 = 0x0C;
+const INCLUDE: u8 = 0x0D;
 
 pub(super) struct Bytecode {
     constants: Vec<Constant>,

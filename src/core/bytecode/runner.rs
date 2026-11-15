@@ -1,8 +1,8 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fs};
 
 use super::{
-    Bytecode, CONCAT, Constant, DUP, EQUAL, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP, PUSH_ATOM,
-    PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
+    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP,
+    PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
 };
 use crate::core::{Environment, Error, ErrorKind, value::Value};
 
@@ -57,6 +57,22 @@ impl<'a> BytecodeRunner<'a> {
                 PUSH_NULL => self.stack.push(Value::Null),
                 PUSH_TRUE => self.stack.push(Value::Boolean(true)),
                 PUSH_FALSE => self.stack.push(Value::Boolean(false)),
+                INCLUDE => {
+                    let Value::String(path) = self.pop_value(offset)? else {
+                        return Err(Error::new(
+                            ErrorKind::Runtime,
+                            "include expects a string path",
+                        )
+                        .with_metadata("offset", offset.to_string()));
+                    };
+                    let contents = fs::read_to_string(path.as_ref()).map_err(|err| {
+                        Error::new(ErrorKind::IO, "Cannot read included file as UTF-8")
+                            .with_context("include")
+                            .with_metadata("path", path.as_ref())
+                            .with_source(err)
+                    })?;
+                    self.stack.push(Value::String(Cow::Owned(contents)));
+                }
                 DUP => {
                     let value = self
                         .stack

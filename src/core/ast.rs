@@ -10,6 +10,7 @@ pub(super) enum AstNode {
     NullLiteral,
     BooleanLiteral(bool),
     Variable(String),
+    Include(Box<AstNode>),
     Concat(Vec<AstNode>),
     Match {
         value: Box<AstNode>,

@@ -61,6 +61,28 @@ impl<'a> Parser<'a> {
     fn parse_expression_node(lexer: &mut Lexer<'_>, token: Token) -> Result<AstNode, Error> {
         match token.kind {
             TokenKind::Match => Self::parse_match(lexer, token.offset),
+            TokenKind::Identifier(ref name)
+                if name == "include"
+                    && matches!(lexer.peek_token()?.kind, TokenKind::OpenParen) =>
+            {
+                lexer.next_token()?;
+                let argument = lexer.next_token()?;
+                if matches!(argument.kind, TokenKind::CloseParen | TokenKind::EndOfInput) {
+                    return Err(Self::error(
+                        "include expects one path argument",
+                        argument.offset,
+                    ));
+                }
+                let path = Self::parse_expression_node(lexer, argument)?;
+                let close = lexer.next_token()?;
+                if !matches!(close.kind, TokenKind::CloseParen) {
+                    return Err(Self::error(
+                        "Expected closing parenthesis after include path",
+                        close.offset,
+                    ));
+                }
+                Ok(AstNode::Include(Box::new(path)))
+            }
             TokenKind::OpenParen => {
                 let inner = lexer.next_token()?;
                 let node = Self::parse_expression_node(lexer, inner)?;
