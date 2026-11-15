@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-use std::error::Error as StdError;
-use std::fmt;
+use std::{collections::HashMap, error::Error as StdError, fmt};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorKind {
     IO,
     InvalidSource,
     InvalidTarget,
+    InvalidBytecode,
 }
 
 impl fmt::Display for ErrorKind {
@@ -15,6 +14,7 @@ impl fmt::Display for ErrorKind {
             Self::IO => "IO Error",
             Self::InvalidSource => "Invalid Source",
             Self::InvalidTarget => "Invalid Target",
+            Self::InvalidBytecode => "Invalid Bytecode",
         })
     }
 }
@@ -65,7 +65,7 @@ impl fmt::Display for Error {
         if !self.metadatas.is_empty() {
             write!(f, " (")?;
             let mut entries: Vec<_> = self.metadatas.iter().collect();
-            entries.sort_unstable_by(|(left, _), (right, _)| left.cmp(right));
+            entries.sort_unstable_by_key(|(key, _)| *key);
             for (index, (key, value)) in entries.into_iter().enumerate() {
                 if index > 0 {
                     write!(f, ", ")?;

@@ -1,20 +1,25 @@
+mod ast;
+mod bytecode;
 pub mod error;
 
-pub use error::{Error, ErrorKind};
+use std::{fs, io, path::Path};
 
-use std::fs;
-use std::io;
-use std::path::Path;
+use self::{
+    ast::Ast,
+    bytecode::{BytecodeCompiler, BytecodeRunner},
+};
 
-pub fn copy_contents(source: &Path, target: &Path) -> Result<(), Error> {
-    copy_contents_inner(source, target).map_err(|err| {
-        err.with_context("copying source bytes to output")
+pub use self::error::{Error, ErrorKind};
+
+pub fn run_file(source: &Path, target: &Path) -> Result<(), Error> {
+    run_file_inner(source, target).map_err(|err| {
+        err.with_context("compiling and executing source file")
             .with_metadata("source", source.display().to_string())
             .with_metadata("output", target.display().to_string())
     })
 }
 
-fn copy_contents_inner(source: &Path, target: &Path) -> Result<(), Error> {
+fn run_file_inner(source: &Path, target: &Path) -> Result<(), Error> {
     let metadata = fs::metadata(source)
         .map_err(|err| Error::new(ErrorKind::IO, "Cannot inspect source").with_source(err))?;
     if !metadata.is_file() {
@@ -46,6 +51,12 @@ fn copy_contents_inner(source: &Path, target: &Path) -> Result<(), Error> {
 
     let contents = fs::read(source)
         .map_err(|err| Error::new(ErrorKind::IO, "Cannot read source").with_source(err))?;
-    fs::write(target, contents)
+    let source_text = String::from_utf8(contents).map_err(|err| {
+        Error::new(ErrorKind::InvalidSource, "Source is not valid UTF-8").with_source(err)
+    })?;
+    let ast = Ast::parse(source_text);
+    let bytecode = BytecodeCompiler::new(ast).compile();
+    let output = BytecodeRunner::new(&bytecode).run()?;
+    fs::write(target, output)
         .map_err(|err| Error::new(ErrorKind::IO, "Cannot write target").with_source(err))
 }

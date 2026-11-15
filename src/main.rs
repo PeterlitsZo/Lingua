@@ -1,12 +1,13 @@
 mod cli;
 mod core;
 
-use cli::Cli;
 use std::process::ExitCode;
+
+use crate::cli::Cli;
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    match core::copy_contents(&cli.source, &cli.output) {
+    match core::run_file(&cli.source, &cli.output) {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             eprintln!("{err}");

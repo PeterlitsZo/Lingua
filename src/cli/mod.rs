@@ -1,14 +1,11 @@
+use std::{ffi::OsStr, path::PathBuf};
+
 use clap::{CommandFactory, Parser, error::ErrorKind};
-use std::ffi::OsStr;
-use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(
-    version,
-    about = "Copy a file's bytes to the path without its final .lingua suffix"
-)]
+#[command(version, about = "Process a Lingua file")]
 struct Args {
-    /// Source file to copy
+    /// Source file
     #[arg(value_name = "file.lingua")]
     source: PathBuf,
 }
