@@ -43,16 +43,22 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self, start: usize) -> Result<AstNode, Error> {
         let mut lexer = Lexer::new(self.source, self.position);
         let token = lexer.next_token()?;
-        let value = match token.kind {
-            TokenKind::StringLiteral(value) => value,
+        let node = match token.kind {
+            TokenKind::StringLiteral(value) => AstNode::StringLiteral(value),
+            TokenKind::AtomLiteral(atom) => AstNode::AtomLiteral(atom),
             TokenKind::EndOfInput => return Err(Self::error("Unterminated interpolation", start)),
-            _ => return Err(Self::error("Expected a string literal", token.offset)),
+            _ => {
+                return Err(Self::error(
+                    "Expected a string or atom literal",
+                    token.offset,
+                ));
+            }
         };
         let token = lexer.next_token()?;
         match token.kind {
             TokenKind::CloseParen => {
                 self.position = lexer.position();
-                Ok(AstNode::StringLiteral(value))
+                Ok(node)
             }
             TokenKind::EndOfInput => Err(Self::error("Unterminated interpolation", start)),
             _ => Err(Self::error("Expected closing parenthesis", token.offset)),

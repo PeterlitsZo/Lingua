@@ -1,7 +1,8 @@
-use super::{Error, ErrorKind};
+use super::{Error, ErrorKind, atom::Atom};
 
 pub(super) enum TokenKind {
     StringLiteral(String),
+    AtomLiteral(Atom),
     CloseParen,
     EndOfInput,
 }
@@ -32,6 +33,7 @@ impl<'a> Lexer<'a> {
         let offset = self.position;
         let kind = match self.advance() {
             Some('"') => TokenKind::StringLiteral(self.read_string(offset)?),
+            Some(':') => TokenKind::AtomLiteral(self.read_atom(offset)?),
             Some(')') => TokenKind::CloseParen,
             None => TokenKind::EndOfInput,
             Some(_) => return Err(Self::error("Unexpected character in expression", offset)),
@@ -43,6 +45,25 @@ impl<'a> Lexer<'a> {
         let character = self.source[self.position..].chars().next()?;
         self.position += character.len_utf8();
         Some(character)
+    }
+
+    fn read_atom(&mut self, offset: usize) -> Result<Atom, Error> {
+        let start = self.position;
+        match self.source[start..].chars().next() {
+            Some(character) if character.is_ascii_alphabetic() || character == '_' => {
+                self.advance();
+            }
+            _ => return Err(Self::error("Expected an atom name", offset)),
+        }
+        while let Some(character) = self.source[self.position..].chars().next() {
+            if !character.is_ascii_alphanumeric() && character != '_' {
+                break;
+            }
+            self.advance();
+        }
+        Ok(Atom {
+            name: self.source[start..self.position].into(),
+        })
     }
 
     fn read_string(&mut self, start: usize) -> Result<String, Error> {

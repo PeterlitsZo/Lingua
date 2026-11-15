@@ -1,12 +1,12 @@
 use std::borrow::Cow;
 
-use super::{Bytecode, CONCAT, PUSH_STRING};
-use crate::core::{Error, ErrorKind};
+use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_STRING};
+use crate::core::{Error, ErrorKind, value::Value};
 
 pub(in crate::core) struct BytecodeRunner<'a> {
     bytecode: &'a Bytecode,
     pc: usize,
-    stack: Vec<Cow<'a, str>>,
+    stack: Vec<Value<'a>>,
 }
 
 impl<'a> BytecodeRunner<'a> {
@@ -18,31 +18,44 @@ impl<'a> BytecodeRunner<'a> {
         }
     }
 
-    pub(in crate::core) fn run(mut self) -> Result<String, Error> {
+    pub(in crate::core) fn run(mut self) -> Result<Value<'a>, Error> {
         while let Some(&opcode) = self.bytecode.code.get(self.pc) {
             let offset = self.pc;
             self.pc += 1;
             match opcode {
-                PUSH_STRING => {
+                PUSH_STRING | PUSH_ATOM => {
                     let index = self.read_operand(offset)? as usize;
                     let value = self.bytecode.constants.get(index).ok_or_else(|| {
-                        Self::invalid_bytecode("String constant index out of bounds", offset)
+                        Self::invalid_bytecode("Constant index out of bounds", offset)
                             .with_metadata("index", index.to_string())
                     })?;
-                    self.stack.push(Cow::Borrowed(value.as_str()));
+                    let value = match (opcode, value) {
+                        (PUSH_STRING, Constant::String(value)) => {
+                            Value::String(Cow::Borrowed(value))
+                        }
+                        (PUSH_ATOM, Constant::Atom(atom)) => Value::Atom(atom),
+                        _ => {
+                            return Err(Self::invalid_bytecode(
+                                "Constant type does not match opcode",
+                                offset,
+                            )
+                            .with_metadata("index", index.to_string()));
+                        }
+                    };
+                    self.stack.push(value);
                 }
                 CONCAT => {
                     let count = self.read_operand(offset)? as usize;
                     let start = self.stack.len().checked_sub(count).ok_or_else(|| {
-                        Self::invalid_bytecode("Not enough strings for concatenation", offset)
+                        Self::invalid_bytecode("Not enough values for concatenation", offset)
                             .with_metadata("count", count.to_string())
                             .with_metadata("stack_size", self.stack.len().to_string())
                     })?;
                     let mut result = String::new();
                     for value in self.stack.drain(start..) {
-                        result.push_str(&value);
+                        value.append_text(&mut result);
                     }
-                    self.stack.push(Cow::Owned(result));
+                    self.stack.push(Value::String(Cow::Owned(result)));
                 }
                 _ => {
                     return Err(Self::invalid_bytecode("Unknown opcode", offset)
@@ -52,17 +65,12 @@ impl<'a> BytecodeRunner<'a> {
         }
 
         if self.stack.len() != 1 {
-            return Err(Self::invalid_bytecode(
-                "Expected exactly one string on the stack",
-                self.pc,
-            )
-            .with_metadata("stack_size", self.stack.len().to_string()));
+            return Err(
+                Self::invalid_bytecode("Expected exactly one value on the stack", self.pc)
+                    .with_metadata("stack_size", self.stack.len().to_string()),
+            );
         }
-        Ok(self
-            .stack
-            .pop()
-            .expect("one string is present")
-            .into_owned())
+        Ok(self.stack.pop().expect("one value is present"))
     }
 
     fn read_operand(&mut self, offset: usize) -> Result<u32, Error> {

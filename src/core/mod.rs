@@ -1,8 +1,10 @@
 mod ast;
+mod atom;
 mod bytecode;
 pub mod error;
 mod lexer;
 mod parser;
+mod value;
 
 use std::{fs, io, path::Path};
 
@@ -59,7 +61,7 @@ fn run_file_inner(source: &Path, target: &Path) -> Result<(), Error> {
 
     let ast = Parser::new(&source_text).parse()?;
     let bytecode = BytecodeCompiler::new().compile(ast)?;
-    let output = BytecodeRunner::new(&bytecode).run()?;
+    let output = BytecodeRunner::new(&bytecode).run()?.into_text();
 
     fs::write(target, output)
         .map_err(|err| Error::new(ErrorKind::IO, "Cannot write target").with_source(err))

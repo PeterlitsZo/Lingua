@@ -1,4 +1,4 @@
-use super::{Bytecode, CONCAT, PUSH_STRING};
+use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_STRING};
 use crate::core::{
     Error, ErrorKind,
     ast::{Ast, AstNode},
@@ -26,11 +26,10 @@ impl BytecodeCompiler {
     fn compile_node(&mut self, node: AstNode) -> Result<(), Error> {
         match node {
             AstNode::StringLiteral(value) => {
-                let index = u32::try_from(self.bytecode.constants.len()).map_err(|err| {
-                    Error::new(ErrorKind::Compile, "Too many string constants").with_source(err)
-                })?;
-                self.bytecode.constants.push(value);
-                self.emit(PUSH_STRING, index);
+                self.emit_constant(PUSH_STRING, Constant::String(value))?;
+            }
+            AstNode::AtomLiteral(atom) => {
+                self.emit_constant(PUSH_ATOM, Constant::Atom(atom))?;
             }
             AstNode::Concat(nodes) => {
                 let count = u32::try_from(nodes.len()).map_err(|err| {
@@ -43,6 +42,14 @@ impl BytecodeCompiler {
                 self.emit(CONCAT, count);
             }
         }
+        Ok(())
+    }
+
+    fn emit_constant(&mut self, opcode: u8, constant: Constant) -> Result<(), Error> {
+        let index = u32::try_from(self.bytecode.constants.len())
+            .map_err(|err| Error::new(ErrorKind::Compile, "Too many constants").with_source(err))?;
+        self.bytecode.constants.push(constant);
+        self.emit(opcode, index);
         Ok(())
     }
 
