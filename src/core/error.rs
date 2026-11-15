@@ -6,6 +6,9 @@ pub enum ErrorKind {
     InvalidSource,
     InvalidTarget,
     InvalidBytecode,
+    Lex,
+    Parse,
+    Compile,
 }
 
 impl fmt::Display for ErrorKind {
@@ -15,6 +18,9 @@ impl fmt::Display for ErrorKind {
             Self::InvalidSource => "Invalid Source",
             Self::InvalidTarget => "Invalid Target",
             Self::InvalidBytecode => "Invalid Bytecode",
+            Self::Lex => "Lex Error",
+            Self::Parse => "Parse Error",
+            Self::Compile => "Compile Error",
         })
     }
 }

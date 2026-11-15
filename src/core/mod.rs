@@ -1,19 +1,21 @@
 mod ast;
 mod bytecode;
 pub mod error;
+mod lexer;
+mod parser;
 
 use std::{fs, io, path::Path};
 
 use self::{
-    ast::Ast,
     bytecode::{BytecodeCompiler, BytecodeRunner},
+    parser::Parser,
 };
 
 pub use self::error::{Error, ErrorKind};
 
 pub fn run_file(source: &Path, target: &Path) -> Result<(), Error> {
     run_file_inner(source, target).map_err(|err| {
-        err.with_context("compiling and executing source file")
+        err.with_context("processing source file")
             .with_metadata("source", source.display().to_string())
             .with_metadata("output", target.display().to_string())
     })
@@ -54,9 +56,11 @@ fn run_file_inner(source: &Path, target: &Path) -> Result<(), Error> {
     let source_text = String::from_utf8(contents).map_err(|err| {
         Error::new(ErrorKind::InvalidSource, "Source is not valid UTF-8").with_source(err)
     })?;
-    let ast = Ast::parse(source_text);
-    let bytecode = BytecodeCompiler::new(ast).compile();
+
+    let ast = Parser::new(&source_text).parse()?;
+    let bytecode = BytecodeCompiler::new().compile(ast)?;
     let output = BytecodeRunner::new(&bytecode).run()?;
+
     fs::write(target, output)
         .map_err(|err| Error::new(ErrorKind::IO, "Cannot write target").with_source(err))
 }

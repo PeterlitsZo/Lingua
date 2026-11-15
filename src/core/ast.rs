@@ -4,12 +4,5 @@ pub(super) struct Ast {
 
 pub(super) enum AstNode {
     StringLiteral(String),
-}
-
-impl Ast {
-    pub(super) fn parse(source: String) -> Self {
-        Self {
-            root: AstNode::StringLiteral(source),
-        }
-    }
+    Concat(Vec<AstNode>),
 }
