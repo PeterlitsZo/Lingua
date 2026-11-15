@@ -52,7 +52,15 @@ impl<'a> Lexer<'a> {
         }
         let offset = self.position;
         let kind = match self.advance() {
-            Some('"') => TokenKind::StringLiteral(self.read_string(offset)?),
+            Some('"') => {
+                let value = if self.source[self.position..].starts_with("\"\"") {
+                    self.position += 2;
+                    self.read_multiline_string(offset)?
+                } else {
+                    self.read_string(offset)?
+                };
+                TokenKind::StringLiteral(value)
+            }
             Some(':') => TokenKind::AtomLiteral(self.read_atom(offset)?),
             Some(character) if character.is_ascii_alphabetic() || character == '_' => {
                 self.read_identifier(offset)
@@ -104,6 +112,51 @@ impl<'a> Lexer<'a> {
         Ok(Atom {
             name: self.source[start..self.position].into(),
         })
+    }
+
+    fn read_multiline_string(&mut self, start: usize) -> Result<String, Error> {
+        let content_start = self.position;
+        let length = self.source[content_start..]
+            .find("\"\"\"")
+            .ok_or_else(|| Self::error("Unterminated multiline string", start))?;
+        let end = content_start + length;
+        let mut lines = self.source[content_start..end].split('\n').peekable();
+        let mut offset = content_start;
+        let mut value = String::new();
+        let mut has_line = false;
+        while let Some(line) = lines.next() {
+            let last = lines.peek().is_none();
+            let line_start = offset;
+            offset += line.len() + 1;
+            let line = if !last {
+                line.strip_suffix('\r').unwrap_or(line)
+            } else {
+                line
+            };
+            if (line_start == content_start || last) && line.chars().all(char::is_whitespace) {
+                continue;
+            }
+            let trimmed = line.trim_start_matches(char::is_whitespace);
+            let marker = line_start + line.len() - trimmed.len();
+            let content = trimmed.strip_prefix('|').ok_or_else(|| {
+                Self::error(
+                    "Expected '|' at the start of a multiline string line",
+                    marker,
+                )
+            })?;
+            let separator = content
+                .chars()
+                .next()
+                .filter(|character| character.is_whitespace())
+                .ok_or_else(|| Self::error("Expected whitespace after '|'", marker + 1))?;
+            if has_line {
+                value.push('\n');
+            }
+            value.push_str(&content[separator.len_utf8()..]);
+            has_line = true;
+        }
+        self.position = end + 3;
+        Ok(value)
     }
 
     fn read_string(&mut self, start: usize) -> Result<String, Error> {
