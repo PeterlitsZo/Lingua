@@ -1,4 +1,4 @@
-use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_STRING};
+use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE};
 use crate::core::{
     Error, ErrorKind,
     ast::{Ast, AstNode},
@@ -30,6 +30,12 @@ impl BytecodeCompiler {
             }
             AstNode::AtomLiteral(atom) => {
                 self.emit_constant(PUSH_ATOM, Constant::Atom(atom))?;
+            }
+            AstNode::NullLiteral => self.bytecode.code.push(PUSH_NULL),
+            AstNode::BooleanLiteral(value) => {
+                self.bytecode
+                    .code
+                    .push(if value { PUSH_TRUE } else { PUSH_FALSE });
             }
             AstNode::Concat(nodes) => {
                 let count = u32::try_from(nodes.len()).map_err(|err| {

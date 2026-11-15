@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_STRING};
+use super::{Bytecode, CONCAT, Constant, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE};
 use crate::core::{Error, ErrorKind, value::Value};
 
 pub(in crate::core) struct BytecodeRunner<'a> {
@@ -44,6 +44,9 @@ impl<'a> BytecodeRunner<'a> {
                     };
                     self.stack.push(value);
                 }
+                PUSH_NULL => self.stack.push(Value::Null),
+                PUSH_TRUE => self.stack.push(Value::Boolean(true)),
+                PUSH_FALSE => self.stack.push(Value::Boolean(false)),
                 CONCAT => {
                     let count = self.read_operand(offset)? as usize;
                     let start = self.stack.len().checked_sub(count).ok_or_else(|| {

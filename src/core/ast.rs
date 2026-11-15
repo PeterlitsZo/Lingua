@@ -7,5 +7,7 @@ pub(super) struct Ast {
 pub(super) enum AstNode {
     StringLiteral(String),
     AtomLiteral(Atom),
+    NullLiteral,
+    BooleanLiteral(bool),
     Concat(Vec<AstNode>),
 }

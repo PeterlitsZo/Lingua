@@ -46,12 +46,11 @@ impl<'a> Parser<'a> {
         let node = match token.kind {
             TokenKind::StringLiteral(value) => AstNode::StringLiteral(value),
             TokenKind::AtomLiteral(atom) => AstNode::AtomLiteral(atom),
+            TokenKind::NullLiteral => AstNode::NullLiteral,
+            TokenKind::BooleanLiteral(value) => AstNode::BooleanLiteral(value),
             TokenKind::EndOfInput => return Err(Self::error("Unterminated interpolation", start)),
             _ => {
-                return Err(Self::error(
-                    "Expected a string or atom literal",
-                    token.offset,
-                ));
+                return Err(Self::error("Expected a literal", token.offset));
             }
         };
         let token = lexer.next_token()?;
