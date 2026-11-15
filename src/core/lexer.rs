@@ -6,6 +6,8 @@ pub(super) enum TokenKind {
     Identifier(String),
     NullLiteral,
     BooleanLiteral(bool),
+    Match,
+    OpenParen,
     CloseParen,
     EndOfInput,
 }
@@ -18,18 +20,33 @@ pub(super) struct Token {
 pub(super) struct Lexer<'a> {
     source: &'a str,
     position: usize,
+    lookahead: Option<Token>,
 }
 
 impl<'a> Lexer<'a> {
     pub(super) fn new(source: &'a str, position: usize) -> Self {
-        Self { source, position }
+        Self {
+            source,
+            position,
+            lookahead: None,
+        }
     }
 
     pub(super) fn position(&self) -> usize {
         self.position
     }
 
+    pub(super) fn peek_token(&mut self) -> Result<&Token, Error> {
+        if self.lookahead.is_none() {
+            self.lookahead = Some(self.next_token()?);
+        }
+        Ok(self.lookahead.as_ref().expect("lookahead is present"))
+    }
+
     pub(super) fn next_token(&mut self) -> Result<Token, Error> {
+        if let Some(token) = self.lookahead.take() {
+            return Ok(token);
+        }
         while self.source[self.position..].starts_with(char::is_whitespace) {
             self.advance();
         }
@@ -40,6 +57,7 @@ impl<'a> Lexer<'a> {
             Some(character) if character.is_ascii_alphabetic() || character == '_' => {
                 self.read_identifier(offset)
             }
+            Some('(') => TokenKind::OpenParen,
             Some(')') => TokenKind::CloseParen,
             None => TokenKind::EndOfInput,
             Some(_) => return Err(Self::error("Unexpected character in expression", offset)),
@@ -61,6 +79,7 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
         match &self.source[start..self.position] {
+            "match" => TokenKind::Match,
             "null" => TokenKind::NullLiteral,
             "true" => TokenKind::BooleanLiteral(true),
             "false" => TokenKind::BooleanLiteral(false),

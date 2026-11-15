@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use super::atom::Atom;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Value<'a> {
     String(Cow<'a, str>),
     Atom(Cow<'a, Atom>),

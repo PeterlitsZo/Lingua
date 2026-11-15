@@ -1,6 +1,6 @@
 use super::{
     Error, ErrorKind,
-    ast::{Ast, AstNode},
+    ast::{Ast, AstNode, MatchArm, MatchPattern},
     lexer::{Lexer, Token, TokenKind},
 };
 
@@ -46,7 +46,7 @@ impl<'a> Parser<'a> {
         if matches!(token.kind, TokenKind::EndOfInput) {
             return Err(Self::error("Unterminated interpolation", start));
         }
-        let node = Self::parse_node(token)?;
+        let node = Self::parse_expression_node(&mut lexer, token)?;
         let token = lexer.next_token()?;
         match token.kind {
             TokenKind::CloseParen => {
@@ -56,6 +56,81 @@ impl<'a> Parser<'a> {
             TokenKind::EndOfInput => Err(Self::error("Unterminated interpolation", start)),
             _ => Err(Self::error("Expected closing parenthesis", token.offset)),
         }
+    }
+
+    fn parse_expression_node(lexer: &mut Lexer<'_>, token: Token) -> Result<AstNode, Error> {
+        match token.kind {
+            TokenKind::Match => Self::parse_match(lexer, token.offset),
+            TokenKind::OpenParen => {
+                let inner = lexer.next_token()?;
+                let node = Self::parse_expression_node(lexer, inner)?;
+                let close = lexer.next_token()?;
+                if !matches!(close.kind, TokenKind::CloseParen) {
+                    return Err(Self::error("Expected closing parenthesis", close.offset));
+                }
+                Ok(node)
+            }
+            _ => Self::parse_node(token),
+        }
+    }
+
+    fn parse_match(lexer: &mut Lexer<'_>, offset: usize) -> Result<AstNode, Error> {
+        let subject = lexer.next_token()?;
+        let value = Self::parse_match_operand(lexer, subject)?;
+        let mut arms = Vec::new();
+        let mut wildcard = false;
+        loop {
+            let next = lexer.peek_token()?;
+            if matches!(next.kind, TokenKind::CloseParen | TokenKind::EndOfInput) {
+                break;
+            }
+            if wildcard {
+                return Err(Self::error(
+                    "Wildcard must be the last match arm",
+                    next.offset,
+                ));
+            }
+            let token = lexer.next_token()?;
+            let pattern = match token.kind {
+                TokenKind::StringLiteral(value) => MatchPattern::String(value),
+                TokenKind::AtomLiteral(atom) => MatchPattern::Atom(atom),
+                TokenKind::BooleanLiteral(value) => MatchPattern::Boolean(value),
+                TokenKind::NullLiteral => MatchPattern::Null,
+                TokenKind::Identifier(name) if name == "_" => {
+                    wildcard = true;
+                    MatchPattern::Wildcard
+                }
+                _ => {
+                    return Err(Self::error(
+                        "Expected a literal pattern or wildcard",
+                        token.offset,
+                    ));
+                }
+            };
+            let token = lexer.next_token()?;
+            let result = Self::parse_match_operand(lexer, token)?;
+            arms.push(MatchArm {
+                pattern,
+                value: result,
+            });
+        }
+        if arms.is_empty() {
+            return Err(Self::error("Expected at least one match arm", offset));
+        }
+        Ok(AstNode::Match {
+            value: Box::new(value),
+            arms,
+        })
+    }
+
+    fn parse_match_operand(lexer: &mut Lexer<'_>, token: Token) -> Result<AstNode, Error> {
+        if matches!(token.kind, TokenKind::Match) {
+            return Err(Self::error(
+                "Nested match requires parentheses",
+                token.offset,
+            ));
+        }
+        Self::parse_expression_node(lexer, token)
     }
 
     pub(crate) fn parse_identifier(self) -> Result<String, Error> {

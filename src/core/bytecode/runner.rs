@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use super::{
-    Bytecode, CONCAT, Constant, LOAD_VARIABLE, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING,
-    PUSH_TRUE,
+    Bytecode, CONCAT, Constant, DUP, EQUAL, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP, PUSH_ATOM,
+    PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
 };
 use crate::core::{Environment, Error, ErrorKind, value::Value};
 
@@ -57,6 +57,49 @@ impl<'a> BytecodeRunner<'a> {
                 PUSH_NULL => self.stack.push(Value::Null),
                 PUSH_TRUE => self.stack.push(Value::Boolean(true)),
                 PUSH_FALSE => self.stack.push(Value::Boolean(false)),
+                DUP => {
+                    let value = self
+                        .stack
+                        .last()
+                        .ok_or_else(|| {
+                            Self::invalid_bytecode("Cannot duplicate an empty stack", offset)
+                        })?
+                        .clone();
+                    self.stack.push(value);
+                }
+                POP => {
+                    self.pop_value(offset)?;
+                }
+                EQUAL => {
+                    let right = self.pop_value(offset)?;
+                    let left = self.pop_value(offset)?;
+                    self.stack.push(Value::Boolean(left == right));
+                }
+                JUMP | JUMP_IF_FALSE => {
+                    let target = self.read_operand(offset)? as usize;
+                    if target < self.pc || target > self.bytecode.code.len() {
+                        return Err(
+                            Self::invalid_bytecode("Invalid forward jump target", offset)
+                                .with_metadata("target", target.to_string()),
+                        );
+                    }
+                    let should_jump = if opcode == JUMP_IF_FALSE {
+                        match self.pop_value(offset)? {
+                            Value::Boolean(value) => !value,
+                            _ => {
+                                return Err(Self::invalid_bytecode(
+                                    "Expected a boolean jump condition",
+                                    offset,
+                                ));
+                            }
+                        }
+                    } else {
+                        true
+                    };
+                    if should_jump {
+                        self.pc = target;
+                    }
+                }
                 CONCAT => {
                     let count = self.read_operand(offset)? as usize;
                     let start = self.stack.len().checked_sub(count).ok_or_else(|| {
@@ -84,6 +127,12 @@ impl<'a> BytecodeRunner<'a> {
             );
         }
         Ok(self.stack.pop().expect("one value is present"))
+    }
+
+    fn pop_value(&mut self, offset: usize) -> Result<Value<'a>, Error> {
+        self.stack
+            .pop()
+            .ok_or_else(|| Self::invalid_bytecode("Stack underflow", offset))
     }
 
     fn read_operand(&mut self, offset: usize) -> Result<u32, Error> {

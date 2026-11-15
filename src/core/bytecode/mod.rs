@@ -12,6 +12,11 @@ const PUSH_NULL: u8 = 0x04;
 const PUSH_TRUE: u8 = 0x05;
 const PUSH_FALSE: u8 = 0x06;
 const LOAD_VARIABLE: u8 = 0x07;
+const DUP: u8 = 0x08;
+const EQUAL: u8 = 0x09;
+const JUMP_IF_FALSE: u8 = 0x0A;
+const POP: u8 = 0x0B;
+const JUMP: u8 = 0x0C;
 
 pub(super) struct Bytecode {
     constants: Vec<Constant>,
