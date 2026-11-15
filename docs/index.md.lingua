@@ -1,0 +1,392 @@
+# Lingua
+
+\(match lang
+  :zh_CN "使用 Lingua，在一个源文件中维护多语言文档。"
+  :zh_TW "使用 Lingua，在一個原始檔中維護多語言文件。"
+  :ja_JP "Lingua を使うと、ひとつのソースファイルで多言語ドキュメントを管理できます。"
+  :ko_KR "Lingua로 하나의 소스 파일에서 다국어 문서를 관리할 수 있습니다."
+  :es_ES """
+    | Con Lingua puedes mantener documentación multilingüe en un solo archivo fuente.
+  """
+  :fr_FR """
+    | Avec Lingua, gérez une documentation multilingue dans un seul fichier source.
+  """
+  :de_DE "Mit Lingua verwaltest du mehrsprachige Dokumentation in einer Quelldatei."
+  :pt_BR """
+    | Com o Lingua, você mantém documentação multilíngue em um único arquivo-fonte.
+  """
+  _ "Use Lingua to maintain multilingual documentation in a single source file.")
+
+\(match lang
+  :zh_CN "例如，对于如下 Lingua 文档 `hello.md.lingua`："
+  :zh_TW "例如，以下 Lingua 文件 `hello.md.lingua`："
+  :ja_JP "たとえば、次の Lingua ドキュメント `hello.md.lingua` を用意します。"
+  :ko_KR "예를 들어 다음과 같은 Lingua 문서 `hello.md.lingua`가 있다고 합시다."
+  :es_ES "Por ejemplo, con este documento de Lingua, `hello.md.lingua`:"
+  :fr_FR "Prenons ce document Lingua, `hello.md.lingua` :"
+  :de_DE "Zum Beispiel mit diesem Lingua-Dokument `hello.md.lingua`:"
+  :pt_BR "Por exemplo, com este documento Lingua, `hello.md.lingua`:"
+  _ "For example, given this Lingua document, `hello.md.lingua`:")
+
+```text
+\("# \\(match lang")
+\("  :zh_CN \"你好\"")
+\("  _      \"Hello\")")
+```
+
+\(match lang
+  :zh_CN "我们可以通过 Lingua 提供的 `lingua` 工具来生成不同语言的文档："
+  :zh_TW "我們可以透過 Lingua 提供的 `lingua` 工具產生不同語言的文件："
+  :ja_JP "`lingua` コマンドで、言語ごとにドキュメントを生成できます。"
+  :ko_KR "`lingua` 도구로 언어별 문서를 생성할 수 있습니다."
+  :es_ES """
+    | Podemos generar documentos en distintos idiomas con la herramienta `lingua`:
+  """
+  :fr_FR "L’outil `lingua` permet de générer des documents dans différentes langues :"
+  :de_DE "Mit dem Werkzeug `lingua` erzeugen wir Dokumente in verschiedenen Sprachen:"
+  :pt_BR "Podemos gerar documentos em diferentes idiomas com a ferramenta `lingua`:"
+  _ "We can generate documents in different languages using the `lingua` tool:")
+
+```text
+lingua hello.md.lingua -v lang=:zh_CN -o hello.md
+```
+
+\(match lang
+  :zh_CN "如上的命令中，它会渲染得到："
+  :zh_TW "上述命令會產生："
+  :ja_JP "このコマンドの出力は次のとおりです。"
+  :ko_KR "위 명령의 출력은 다음과 같습니다."
+  :es_ES "El comando anterior produce:"
+  :fr_FR "Cette commande produit :"
+  :de_DE "Dieser Befehl erzeugt:"
+  :pt_BR "O comando acima produz:"
+  _ "The command above produces:")
+
+```markdown
+# 你好
+```
+
+## \(match lang
+  :zh_CN "构建和安装"
+  :zh_TW "建置與安裝"
+  :ja_JP "ビルドとインストール"
+  :ko_KR "빌드 및 설치"
+  :es_ES "Compilación e instalación"
+  :fr_FR "Compilation et installation"
+  :de_DE "Bauen und installieren"
+  :pt_BR "Compilação e instalação"
+  _ "Build and install")
+
+\(match lang
+  :zh_CN "目前我们仅支持从源码中构建。"
+  :zh_TW "目前僅支援從原始碼建置。"
+  :ja_JP "現在はソースからのビルドのみ対応しています。"
+  :ko_KR "현재는 소스에서 빌드하는 방법만 지원합니다."
+  :es_ES "Por ahora, solo se admite la compilación desde el código fuente."
+  :fr_FR "Pour le moment, seule la compilation depuis les sources est disponible."
+  :de_DE "Derzeit wird nur das Bauen aus dem Quellcode unterstützt."
+  :pt_BR "Por enquanto, só é possível compilar a partir do código-fonte."
+  _ "Currently, we only support building from source.")
+
+### \(match lang
+  :zh_CN "从源码构建"
+  :zh_TW "從原始碼建置"
+  :ja_JP "ソースからビルド"
+  :ko_KR "소스에서 빌드"
+  :es_ES "Compilar desde el código fuente"
+  :fr_FR "Compiler depuis les sources"
+  :de_DE "Aus dem Quellcode bauen"
+  :pt_BR "Compilar a partir do código-fonte"
+  _ "Build from source")
+
+\(match lang
+  :zh_CN "需要安装支持 Rust 2024 edition 的 Rust 工具链和 Cargo。在项目根目录运行："
+  :zh_TW "需要安裝支援 Rust 2024 edition 的 Rust 工具鏈與 Cargo。在專案根目錄執行："
+  :ja_JP """
+    | Rust 2024 edition に対応した Rust ツールチェーンと Cargo が必要です。プロジェク
+    | トのルートで実行します。
+  """
+  :ko_KR """
+    | Rust 2024 edition을 지원하는 Rust 도구 체인과 Cargo가 필요합니다. 프로젝트
+    | 루트에서 실행하세요.
+  """
+  :es_ES """
+    | Necesitas una cadena de herramientas de Rust compatible con la edición 2024 y
+    | Cargo. Ejecuta esto desde la raíz del proyecto:
+  """
+  :fr_FR """
+    | Il faut une chaîne Rust compatible avec l’édition 2024 et Cargo. À la racine du
+    | projet, exécutez :
+  """
+  :de_DE """
+    | Du brauchst eine Rust-Toolchain mit Unterstützung für Edition 2024 und Cargo.
+    | Führe im Projektverzeichnis Folgendes aus:
+  """
+  :pt_BR """
+    | Você precisa de uma toolchain Rust compatível com a edição 2024 e do Cargo.
+    | Execute na raiz do projeto:
+  """
+  _ """
+    | You need a Rust toolchain that supports edition 2024 and Cargo. Run this from
+    | the project root:
+  """)
+
+```sh
+cargo build --release
+```
+
+## \(match lang
+  :zh_CN "使用"
+  :zh_TW "使用"
+  :ja_JP "使い方"
+  :ko_KR "사용법"
+  :es_ES "Uso"
+  :fr_FR "Utilisation"
+  :de_DE "Verwendung"
+  :pt_BR "Uso"
+  _ "Usage")
+
+### \(match lang
+  :zh_CN "命令行参数"
+  :zh_TW "命令列參數"
+  :ja_JP "コマンドライン引数"
+  :ko_KR "명령줄 인수"
+  :es_ES "Argumentos de línea de comandos"
+  :fr_FR "Arguments de ligne de commande"
+  :de_DE "Kommandozeilenargumente"
+  :pt_BR "Argumentos da linha de comando"
+  _ "Command-line arguments")
+
+- `-o <OUTPUT-FILE>`: \(match lang
+  :zh_CN """
+    | 指定输出文件。不指定时，移除源路径最后的 `.lingua` 后缀作
+    |   为输出路径。
+  """
+  :zh_TW """
+    | 指定輸出檔案。省略時，移除來源路徑最後的 `.lingua` 副檔名
+    |   作為輸出路徑。
+  """
+  :ja_JP """
+    | 出力ファイルを指定します。省略すると、入力パスの末尾から
+    |   `.lingua` を除いたパスに出力します。
+  """
+  :ko_KR """
+    | 출력 파일을 지정합니다. 생략하면 소스 경로 끝의
+    |   `.lingua`를 제거한 경로에 출력합니다.
+  """
+  :es_ES """
+    | Especifica el archivo de salida. Si se omite, se elimina
+    |   el sufijo `.lingua` de la ruta de origen.
+  """
+  :fr_FR """
+    | Indique le fichier de sortie. Sinon, le suffixe `.lingua`
+    |   est retiré du chemin source.
+  """
+  :de_DE """
+    | Legt die Ausgabedatei fest. Ohne diese Option wird die
+    |   Endung `.lingua` vom Quellpfad entfernt.
+  """
+  :pt_BR """
+    | Define o arquivo de saída. Se omitido, remove o sufixo
+    |   `.lingua` do caminho de origem.
+  """
+  _ """
+    | Set the output file. If omitted, remove the final
+    |   `.lingua` suffix from the source path to get the output path.
+  """)
+- `-v <NAME=VALUE>`: \(match lang
+  :zh_CN "设置变量。"
+  :zh_TW "設定變數。"
+  :ja_JP "変数を設定します。"
+  :ko_KR "변수를 설정합니다."
+  :es_ES "Define una variable."
+  :fr_FR "Définit une variable."
+  :de_DE "Setzt eine Variable."
+  :pt_BR "Define uma variável."
+  _ "Set a variable.")
+- `-h` / `-V`: \(match lang
+  :zh_CN "显示帮助或版本。"
+  :zh_TW "顯示說明或版本。"
+  :ja_JP "ヘルプまたはバージョンを表示します。"
+  :ko_KR "도움말 또는 버전을 표시합니다."
+  :es_ES "Muestra la ayuda o la versión."
+  :fr_FR "Affiche l’aide ou la version."
+  :de_DE "Zeigt die Hilfe oder Version an."
+  :pt_BR "Exibe a ajuda ou a versão."
+  _ "Show help or version information.")
+
+### \(match lang
+  :zh_CN "变量"
+  :zh_TW "變數"
+  :ja_JP "変数"
+  :ko_KR "변수"
+  :es_ES "Variables"
+  :fr_FR "Variables"
+  :de_DE "Variablen"
+  :pt_BR "Variáveis"
+  _ "Variables")
+
+\(match lang
+  :zh_CN """
+    | Lingua 支持多种类型的变量，包括字符串、Atom、Boolean 和 Null。不存在的变量求值为
+    | `null`。例如：
+  """
+  :zh_TW """
+    | Lingua 支援多種變數型別，包括字串、Atom、Boolean 和 Null。不存在的變數求值為
+    | `null`。例如：
+  """
+  :ja_JP """
+    | Lingua の変数には文字列、Atom、Boolean、Null を使えます。存在しない変数は `null`
+    | として評価されます。例：
+  """
+  :ko_KR """
+    | Lingua는 문자열, Atom, Boolean, Null 타입의 변수를 지원합니다. 존재하지 않는
+    | 변수는 `null`로 평가됩니다. 예를 들면:
+  """
+  :es_ES """
+    | Lingua admite variables de tipo cadena, Atom, Boolean y Null. Una variable que
+    | no existe se evalúa como `null`. Por ejemplo:
+  """
+  :fr_FR """
+    | Lingua accepte les variables de type chaîne, Atom, Boolean et Null. Une
+    | variable inexistante vaut `null`. Par exemple :
+  """
+  :de_DE """
+    | Lingua unterstützt Variablen der Typen String, Atom, Boolean und Null. Nicht
+    | vorhandene Variablen ergeben `null`. Zum Beispiel:
+  """
+  :pt_BR """
+    | Lingua aceita variáveis dos tipos string, Atom, Boolean e Null. Uma variável
+    | inexistente resulta em `null`. Por exemplo:
+  """
+  _ """
+    | Lingua supports String, Atom, Boolean, and Null variables. A variable that does
+    | not exist evaluates to `null`. For example:
+  """)
+
+```sh
+lingua hello.md.lingua -v 'name="Ada"' -v lang=:en_US -v \
+  enabled=true -v optional=null
+```
+
+### \(match lang
+  :zh_CN "模版语法"
+  :zh_TW "範本語法"
+  :ja_JP "テンプレート構文"
+  :ko_KR "템플릿 문법"
+  :es_ES "Sintaxis de plantillas"
+  :fr_FR "Syntaxe des modèles"
+  :de_DE "Vorlagensyntax"
+  :pt_BR "Sintaxe de templates"
+  _ "Template syntax")
+
+\(match lang
+  :zh_CN "我们使用 `\\(...)` 语法来表示 Lingua 特殊的表达式。"
+  :zh_TW "我們使用 `\\(...)` 語法表示 Lingua 的特殊運算式。"
+  :ja_JP "Lingua の式は `\\(...)` で記述します。"
+  :ko_KR "Lingua 표현식은 `\\(...)` 문법으로 작성합니다."
+  :es_ES "Usamos la sintaxis `\\(...)` para escribir expresiones de Lingua."
+  :fr_FR "Les expressions Lingua s’écrivent avec la syntaxe `\\(...)`."
+  :de_DE "Lingua-Ausdrücke werden mit der Syntax `\\(...)` geschrieben."
+  :pt_BR "Usamos a sintaxe `\\(...)` para escrever expressões do Lingua."
+  _ "We use `\\(...)` to write Lingua expressions.")
+
+\(match lang
+  :zh_CN "最简单的表达式为字面量，例如："
+  :zh_TW "最簡單的運算式是字面值，例如："
+  :ja_JP "最も単純な式はリテラルです。例："
+  :ko_KR "가장 간단한 표현식은 리터럴입니다. 예를 들면:"
+  :es_ES "Las expresiones más sencillas son los literales. Por ejemplo:"
+  :fr_FR "Les expressions les plus simples sont les littéraux. Par exemple :"
+  :de_DE "Die einfachsten Ausdrücke sind Literale. Zum Beispiel:"
+  :pt_BR "As expressões mais simples são os literais. Por exemplo:"
+  _ "The simplest expressions are literals. For example:")
+
+```
+\("\\(\"hello\")")
+\("\\(\"\"\"")
+  | Hello World
+""")
+```
+
+\(match lang
+  :zh_CN "我们也可以使用变量名来渲染变量，如下我们会渲染 `name` 变量的值："
+  :zh_TW "也可以使用變數名稱來輸出變數，以下會輸出 `name` 變數的值："
+  :ja_JP """
+    | 変数名を指定すると、その値を出力できます。次の例では `name` の値を出力します。
+  """
+  :ko_KR """
+    | 변수 이름으로 값을 출력할 수도 있습니다. 다음은 `name` 변수의 값을 출력합니다.
+  """
+  :es_ES """
+    | También podemos usar un nombre de variable para mostrar su valor. Aquí
+    | mostramos el valor de `name`:
+  """
+  :fr_FR """
+    | On peut aussi afficher une variable en utilisant son nom. Ici, on affiche la
+    | valeur de `name` :
+  """
+  :de_DE """
+    | Über den Variablennamen kannst du ihren Wert ausgeben. Hier wird der Wert von
+    | `name` ausgegeben:
+  """
+  :pt_BR """
+    | Também podemos usar o nome de uma variável para exibir seu valor. Aqui exibimos
+    | o valor de `name`:
+  """
+  _ "We can also render a variable by name. This renders the value of `name`:")
+
+```
+\("\\(name)")
+```
+
+\(match lang
+  :zh_CN "我们支持使用 `match` 来进行匹配，例如："
+  :zh_TW "可以使用 `match` 進行比對，例如："
+  :ja_JP "`match` で値に応じた分岐ができます。例："
+  :ko_KR "`match`로 값에 따라 분기할 수 있습니다. 예를 들면:"
+  :es_ES "Podemos usar `match` para elegir según un valor. Por ejemplo:"
+  :fr_FR "On peut utiliser `match` pour choisir selon une valeur. Par exemple :"
+  :de_DE """
+    | Mit `match` kannst du anhand eines Werts einen Zweig auswählen. Zum Beispiel:
+  """
+  :pt_BR "Podemos usar `match` para escolher de acordo com um valor. Por exemplo:"
+  _ "We support matching values with `match`. For example:")
+
+```
+\("\\(match lang")
+\("  :zh_CN \"你好\"")
+\("  _      \"Hello\")")
+```
+
+\(match lang
+  :zh_CN "它会按照顺序选择对应的分支。其中 `_` 为默认分支，没有匹配时使用这个分支。"
+  :zh_TW "它會依序選擇符合的分支。`_` 是預設分支，沒有符合項目時使用。"
+  :ja_JP """
+    | 上から順に一致する分岐を選びます。`_` は、どれにも一致しない場合のデフォルトの分
+    | 岐です。
+  """
+  :ko_KR """
+    | 순서대로 일치하는 분기를 선택합니다. `_`는 일치하는 항목이 없을 때 사용하는
+    | 기본 분기입니다.
+  """
+  :es_ES """
+    | Se elige la primera rama que coincida. `_` es la rama predeterminada y se usa
+    | si ninguna coincide.
+  """
+  :fr_FR """
+    | La première branche correspondante est choisie. `_` est la branche par défaut,
+    | utilisée si aucune ne correspond.
+  """
+  :de_DE """
+    | Der erste passende Zweig wird gewählt. `_` ist der Standardzweig, falls kein
+    | anderer passt.
+  """
+  :pt_BR """
+    | A primeira opção correspondente é escolhida. `_` é a opção padrão, usada quando
+    | nenhuma corresponde.
+  """
+  _ """
+    | The first matching branch is selected. `_` is the default branch, used when
+    | nothing else matches.
+  """)
