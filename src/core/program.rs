@@ -10,6 +10,16 @@ pub(crate) struct Program {
 }
 
 impl Program {
+    pub(super) fn encode(&self) -> Option<Vec<u8>> {
+        self.bytecode.encode()
+    }
+
+    pub(super) fn decode(bytes: &[u8]) -> Option<Self> {
+        Some(Self {
+            bytecode: Bytecode::decode(bytes)?,
+        })
+    }
+
     pub(crate) fn compile(source: &str) -> Result<Self, Error> {
         let ast = Parser::new(source).parse()?;
         Ok(Self {

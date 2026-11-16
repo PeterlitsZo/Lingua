@@ -1,6 +1,9 @@
 use std::{fs, io, path::Path};
 
-use super::{Environment, Error, ErrorKind, Program};
+use super::{
+    Environment, Error, ErrorKind, Program,
+    cache::{SourceCache, SourceStamp},
+};
 
 pub(crate) fn run_file(
     source: &Path,
@@ -44,13 +47,28 @@ fn run_file_inner(source: &Path, target: &Path, environment: &Environment) -> Re
         }
     }
 
-    let contents = fs::read(source)
-        .map_err(|err| Error::new(ErrorKind::IO, "Cannot read source").with_source(err))?;
-    let source_text = String::from_utf8(contents).map_err(|err| {
-        Error::new(ErrorKind::InvalidSource, "Source is not valid UTF-8").with_source(err)
-    })?;
-
-    let program = Program::compile(&source_text)?;
+    let stamp = SourceStamp::new(&metadata);
+    let cache = stamp.and_then(|stamp| SourceCache::new(source, target, stamp));
+    let program = match cache.as_ref().and_then(SourceCache::load) {
+        Some(program) => program,
+        None => {
+            let contents = fs::read(source)
+                .map_err(|err| Error::new(ErrorKind::IO, "Cannot read source").with_source(err))?;
+            let after_read = fs::metadata(source)
+                .ok()
+                .and_then(|metadata| SourceStamp::new(&metadata));
+            let source_text = String::from_utf8(contents).map_err(|err| {
+                Error::new(ErrorKind::InvalidSource, "Source is not valid UTF-8").with_source(err)
+            })?;
+            let program = Program::compile(&source_text)?;
+            if stamp == after_read
+                && let Some(cache) = &cache
+            {
+                cache.store(&program);
+            }
+            program
+        }
+    };
     let output = program.run(environment)?.into_text();
 
     fs::write(target, output)

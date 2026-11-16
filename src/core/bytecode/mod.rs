@@ -1,3 +1,4 @@
+mod codec;
 mod compiler;
 mod runner;
 

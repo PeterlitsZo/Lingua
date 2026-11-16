@@ -1,6 +1,7 @@
 mod ast;
 mod atom;
 mod bytecode;
+mod cache;
 mod environment;
 pub mod error;
 mod file;
