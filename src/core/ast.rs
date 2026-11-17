@@ -11,6 +11,10 @@ pub(super) enum AstNode {
     BooleanLiteral(bool),
     Variable(String),
     Include(Box<AstNode>),
+    Render {
+        path: Box<AstNode>,
+        bindings: Vec<(String, AstNode)>,
+    },
     Concat(Vec<AstNode>),
     Match {
         value: Box<AstNode>,

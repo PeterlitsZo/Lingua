@@ -64,7 +64,9 @@ fn run_file_inner(
         }
     };
     let output = timings.measure("Execute", || {
-        program.run(environment).map(|value| value.into_text())
+        program
+            .run_with_sources(environment, &[source.to_path_buf()])
+            .map(|value| value.into_text())
     })?;
     timings
         .measure("Output write", || fs::write(target, output))

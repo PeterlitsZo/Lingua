@@ -20,6 +20,7 @@ const JUMP_IF_FALSE: u8 = 0x0A;
 const POP: u8 = 0x0B;
 const JUMP: u8 = 0x0C;
 const INCLUDE: u8 = 0x0D;
+const RENDER: u8 = 0x12;
 const MATCH_CONST: u8 = 0x0E;
 const MATCH_TRUE: u8 = 0x0F;
 const MATCH_FALSE: u8 = 0x10;

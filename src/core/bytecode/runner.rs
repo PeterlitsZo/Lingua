@@ -1,17 +1,22 @@
-use std::{borrow::Cow, fs};
+use std::{
+    borrow::Cow,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use super::{
     Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE,
     MATCH_CONST, MATCH_FALSE, MATCH_NULL, MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL,
-    PUSH_STRING, PUSH_TRUE,
+    PUSH_STRING, PUSH_TRUE, RENDER,
 };
-use crate::core::{Environment, Error, ErrorKind, value::Value};
+use crate::core::{Environment, Error, ErrorKind, Program, timing::Timings, value::Value};
 
 pub(in crate::core) struct BytecodeRunner<'a> {
     bytecode: &'a Bytecode,
     environment: &'a Environment,
     pc: usize,
     stack: Vec<Value<'a>>,
+    sources: Vec<PathBuf>,
 }
 
 impl<'a> BytecodeRunner<'a> {
@@ -21,7 +26,13 @@ impl<'a> BytecodeRunner<'a> {
             environment,
             pc: 0,
             stack: Vec::new(),
+            sources: Vec::new(),
         }
+    }
+
+    pub(in crate::core) fn with_sources(mut self, sources: &[PathBuf]) -> Self {
+        self.sources = sources.to_vec();
+        self
     }
 
     pub(in crate::core) fn run(mut self) -> Result<Value<'a>, Error> {
@@ -58,6 +69,40 @@ impl<'a> BytecodeRunner<'a> {
                 PUSH_NULL => self.stack.push(Value::Null),
                 PUSH_TRUE => self.stack.push(Value::Boolean(true)),
                 PUSH_FALSE => self.stack.push(Value::Boolean(false)),
+                RENDER => {
+                    let count = self.read_operand(offset)? as usize;
+                    let operands = count
+                        .checked_mul(2)
+                        .and_then(|n| n.checked_add(1))
+                        .ok_or_else(|| {
+                            Self::invalid_bytecode("Too many render arguments", offset)
+                        })?;
+                    let start = self.stack.len().checked_sub(operands).ok_or_else(|| {
+                        Self::invalid_bytecode("Not enough render operands", offset)
+                    })?;
+                    let arguments: Vec<_> = self.stack.drain(start..).collect();
+                    let Value::String(path) = &arguments[0] else {
+                        return Err(
+                            Error::new(ErrorKind::Runtime, "render expects a string path")
+                                .with_metadata("offset", offset.to_string()),
+                        );
+                    };
+                    let mut environment = self.environment.clone();
+                    for pair in arguments[1..].chunks_exact(2) {
+                        let Value::String(name) = &pair[0] else {
+                            return Err(Self::invalid_bytecode(
+                                "Expected render argument name",
+                                offset,
+                            ));
+                        };
+                        environment.insert(name.to_string(), pair[1].clone().into_owned());
+                    }
+                    let output = self.render(path, &environment).map_err(|err| {
+                        err.with_context("render")
+                            .with_metadata("path", path.as_ref())
+                    })?;
+                    self.stack.push(Value::String(Cow::Owned(output)));
+                }
                 INCLUDE => {
                     let Value::String(path) = self.pop_value(offset)? else {
                         return Err(Error::new(
@@ -183,6 +228,44 @@ impl<'a> BytecodeRunner<'a> {
             );
         }
         Ok(self.stack.pop().expect("one value is present"))
+    }
+
+    fn render(&self, path: &str, environment: &Environment) -> Result<String, Error> {
+        let base = self
+            .sources
+            .last()
+            .and_then(|source| source.parent())
+            .unwrap_or(Path::new("."));
+        let path = base.join(path);
+        let canonical = fs::canonicalize(&path).map_err(|err| {
+            Error::new(ErrorKind::IO, "Cannot resolve template path").with_source(err)
+        })?;
+        for source in &self.sources {
+            let source = fs::canonicalize(source).map_err(|err| {
+                Error::new(ErrorKind::IO, "Cannot resolve source path").with_source(err)
+            })?;
+            if source == canonical {
+                return Err(Error::new(ErrorKind::Runtime, "Circular template render"));
+            }
+        }
+        if self.sources.len() >= 128 {
+            return Err(Error::new(
+                ErrorKind::Runtime,
+                "Template render depth limit exceeded",
+            ));
+        }
+        let contents = fs::read_to_string(&path).map_err(|err| {
+            Error::new(ErrorKind::IO, "Cannot read template as UTF-8").with_source(err)
+        })?;
+        let program = Program::compile(
+            &contents,
+            &mut Timings::new(false, std::time::Instant::now()),
+        )?;
+        let mut sources = self.sources.clone();
+        sources.push(path);
+        program
+            .run_with_sources(environment, &sources)
+            .map(Value::into_text)
     }
 
     fn pop_value(&mut self, offset: usize) -> Result<Value<'a>, Error> {

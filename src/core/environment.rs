@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::value::Value;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Environment {
     variables: HashMap<String, Value<'static>>,
 }

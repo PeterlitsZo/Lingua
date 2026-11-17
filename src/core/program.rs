@@ -33,6 +33,16 @@ impl Program {
         })
     }
 
+    pub(super) fn run_with_sources<'a>(
+        &'a self,
+        environment: &'a Environment,
+        sources: &[std::path::PathBuf],
+    ) -> Result<Value<'a>, Error> {
+        BytecodeRunner::new(&self.bytecode, environment)
+            .with_sources(sources)
+            .run()
+    }
+
     pub(crate) fn run<'a>(&'a self, environment: &'a Environment) -> Result<Value<'a>, Error> {
         BytecodeRunner::new(&self.bytecode, environment).run()
     }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{
     Bytecode, CONCAT, Constant, INCLUDE, JUMP, LOAD_VARIABLE, MATCH_CONST, MATCH_FALSE, MATCH_NULL,
-    MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
+    MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE, RENDER,
 };
 use crate::core::{
     Error, ErrorKind,
@@ -50,6 +50,17 @@ impl BytecodeCompiler {
             AstNode::Include(path) => {
                 self.compile_node(*path)?;
                 self.bytecode.code.push(INCLUDE);
+            }
+            AstNode::Render { path, bindings } => {
+                self.compile_node(*path)?;
+                let count = u32::try_from(bindings.len()).map_err(|err| {
+                    Error::new(ErrorKind::Compile, "Too many render arguments").with_source(err)
+                })?;
+                for (name, value) in bindings {
+                    self.emit_constant(PUSH_STRING, Constant::String(name))?;
+                    self.compile_node(value)?;
+                }
+                self.emit(RENDER, count);
             }
             AstNode::Match { value, arms } => self.compile_match(*value, arms)?,
             AstNode::Concat(nodes) => self.compile_concat(nodes)?,

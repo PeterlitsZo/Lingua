@@ -7,6 +7,8 @@ pub(super) enum TokenKind {
     NullLiteral,
     BooleanLiteral(bool),
     Match,
+    Comma,
+    Equals,
     OpenParen,
     CloseParen,
     EndOfInput,
@@ -65,6 +67,8 @@ impl<'a> Lexer<'a> {
             Some(character) if character.is_ascii_alphabetic() || character == '_' => {
                 self.read_identifier(offset)
             }
+            Some(',') => TokenKind::Comma,
+            Some('=') => TokenKind::Equals,
             Some('(') => TokenKind::OpenParen,
             Some(')') => TokenKind::CloseParen,
             None => TokenKind::EndOfInput,

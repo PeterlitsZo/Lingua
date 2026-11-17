@@ -83,6 +83,11 @@ impl<'a> Parser<'a> {
                 }
                 Ok(AstNode::Include(Box::new(path)))
             }
+            TokenKind::Identifier(ref name)
+                if name == "render" && matches!(lexer.peek_token()?.kind, TokenKind::OpenParen) =>
+            {
+                Self::parse_render(lexer)
+            }
             TokenKind::OpenParen => {
                 let inner = lexer.next_token()?;
                 let node = Self::parse_expression_node(lexer, inner)?;
@@ -96,6 +101,46 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_render(lexer: &mut Lexer<'_>) -> Result<AstNode, Error> {
+        lexer.next_token()?;
+        let token = lexer.next_token()?;
+        let path = Box::new(Self::parse_expression_node(lexer, token)?);
+        let mut bindings = Vec::new();
+        loop {
+            let separator = lexer.next_token()?;
+            match separator.kind {
+                TokenKind::CloseParen => break,
+                TokenKind::Comma => {}
+                _ => {
+                    return Err(Self::error(
+                        "Expected comma or closing parenthesis after render argument",
+                        separator.offset,
+                    ));
+                }
+            }
+            let token = lexer.next_token()?;
+            if matches!(token.kind, TokenKind::CloseParen) {
+                break;
+            }
+            let TokenKind::Identifier(name) = token.kind else {
+                return Err(Self::error("Expected render argument name", token.offset));
+            };
+            if bindings.iter().any(|(existing, _)| existing == &name) {
+                return Err(Self::error("Duplicate render argument", token.offset));
+            }
+            let equals = lexer.next_token()?;
+            if !matches!(equals.kind, TokenKind::Equals) {
+                return Err(Self::error(
+                    "Expected '=' after render argument name",
+                    equals.offset,
+                ));
+            }
+            let value = lexer.next_token()?;
+            bindings.push((name, Self::parse_expression_node(lexer, value)?));
+        }
+        Ok(AstNode::Render { path, bindings })
+    }
+
     fn parse_match(lexer: &mut Lexer<'_>, offset: usize) -> Result<AstNode, Error> {
         let subject = lexer.next_token()?;
         let value = Self::parse_match_operand(lexer, subject)?;
@@ -103,7 +148,10 @@ impl<'a> Parser<'a> {
         let mut wildcard = false;
         loop {
             let next = lexer.peek_token()?;
-            if matches!(next.kind, TokenKind::CloseParen | TokenKind::EndOfInput) {
+            if matches!(
+                next.kind,
+                TokenKind::CloseParen | TokenKind::Comma | TokenKind::EndOfInput
+            ) {
                 break;
             }
             if wildcard {

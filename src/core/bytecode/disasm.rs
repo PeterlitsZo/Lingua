@@ -3,7 +3,7 @@ use std::fmt::Write;
 use super::{
     Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE,
     MATCH_CONST, MATCH_FALSE, MATCH_NULL, MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL,
-    PUSH_STRING, PUSH_TRUE,
+    PUSH_STRING, PUSH_TRUE, RENDER,
 };
 use crate::core::{Error, ErrorKind};
 
@@ -34,6 +34,7 @@ impl Bytecode {
                 POP => ("POP", false),
                 JUMP => ("JUMP", true),
                 INCLUDE => ("INCLUDE", false),
+                RENDER => ("RENDER", true),
                 MATCH_CONST => ("MATCH_CONST", true),
                 MATCH_TRUE => ("MATCH_TRUE", true),
                 MATCH_FALSE => ("MATCH_FALSE", true),
