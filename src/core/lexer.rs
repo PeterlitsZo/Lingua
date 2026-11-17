@@ -115,28 +115,32 @@ impl<'a> Lexer<'a> {
 
     fn read_multiline_string(&mut self, start: usize) -> Result<String, Error> {
         let content_start = self.position;
-        let length = self.source[content_start..]
-            .find("\"\"\"")
-            .ok_or_else(|| Self::error("Unterminated multiline string", start))?;
-        let end = content_start + length;
-        let mut lines = self.source[content_start..end].split('\n').peekable();
-        let mut offset = content_start;
         let mut value = String::new();
         let mut has_line = false;
-        while let Some(line) = lines.next() {
-            let last = lines.peek().is_none();
-            let line_start = offset;
-            offset += line.len() + 1;
-            let line = if !last {
-                line.strip_suffix('\r').unwrap_or(line)
-            } else {
-                line
+        while self.position < self.source.len() {
+            let line_start = self.position;
+            let remaining = &self.source[line_start..];
+            let newline = remaining.find('\n');
+            let line = match newline {
+                Some(length) => {
+                    self.position += length + 1;
+                    let line = &remaining[..length];
+                    line.strip_suffix('\r').unwrap_or(line)
+                }
+                None => {
+                    self.position = self.source.len();
+                    remaining
+                }
             };
-            if (line_start == content_start || last) && line.chars().all(char::is_whitespace) {
-                continue;
-            }
             let trimmed = line.trim_start_matches(char::is_whitespace);
             let marker = line_start + line.len() - trimmed.len();
+            if trimmed.starts_with("\"\"\"") {
+                self.position = marker + 3;
+                return Ok(value);
+            }
+            if trimmed.is_empty() && (line_start == content_start || newline.is_none()) {
+                continue;
+            }
             let content = trimmed.strip_prefix('|').ok_or_else(|| {
                 Self::error(
                     "Expected '|' at the start of a multiline string line",
@@ -154,8 +158,7 @@ impl<'a> Lexer<'a> {
             value.push_str(&content[separator.len_utf8()..]);
             has_line = true;
         }
-        self.position = end + 3;
-        Ok(value)
+        Err(Self::error("Unterminated multiline string", start))
     }
 
     fn read_string(&mut self, start: usize) -> Result<String, Error> {

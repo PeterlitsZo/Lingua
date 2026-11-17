@@ -10,7 +10,7 @@ use super::{Error, ErrorKind, Program, timing::Timings};
 
 const MAGIC: &[u8; 8] = b"LINGUA\0\0";
 // Bump for incompatible encoding, instruction, or compiler semantics changes.
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
