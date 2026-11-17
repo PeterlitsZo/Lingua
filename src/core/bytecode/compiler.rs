@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{
     Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP,
     PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
@@ -9,11 +11,13 @@ use crate::core::{
 
 pub(in crate::core) struct BytecodeCompiler {
     bytecode: Bytecode,
+    constant_indices: HashMap<Constant, u32>,
 }
 
 impl BytecodeCompiler {
     pub(in crate::core) fn new() -> Self {
         Self {
+            constant_indices: HashMap::new(),
             bytecode: Bytecode {
                 constants: Vec::new(),
                 code: Vec::new(),
@@ -122,8 +126,13 @@ impl BytecodeCompiler {
     }
 
     fn emit_constant(&mut self, opcode: u8, constant: Constant) -> Result<(), Error> {
+        if let Some(&index) = self.constant_indices.get(&constant) {
+            self.emit(opcode, index);
+            return Ok(());
+        }
         let index = u32::try_from(self.bytecode.constants.len())
             .map_err(|err| Error::new(ErrorKind::Compile, "Too many constants").with_source(err))?;
+        self.constant_indices.insert(constant.clone(), index);
         self.bytecode.constants.push(constant);
         self.emit(opcode, index);
         Ok(())

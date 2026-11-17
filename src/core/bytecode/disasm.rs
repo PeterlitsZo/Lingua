@@ -73,7 +73,7 @@ impl Constant {
     fn display_parts(&self) -> (&'static str, &str) {
         match self {
             Self::String(text) => ("String", text),
-            Self::Atom(atom) => ("Atom", &atom.name),
+            Self::Atom(atom) => ("Atom", atom.name()),
         }
     }
 }

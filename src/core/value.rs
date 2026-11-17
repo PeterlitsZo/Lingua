@@ -36,7 +36,7 @@ impl Value<'_> {
             Self::String(value) => output.push_str(value),
             Self::Atom(atom) => {
                 output.push(':');
-                output.push_str(&atom.name);
+                output.push_str(atom.name());
             }
         }
     }

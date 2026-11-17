@@ -26,6 +26,7 @@ pub(super) struct Bytecode {
     code: Vec<u8>,
 }
 
+#[derive(Clone, PartialEq, Eq, Hash)]
 enum Constant {
     String(String),
     Atom(Atom),

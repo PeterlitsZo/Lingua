@@ -7,8 +7,8 @@ impl Bytecode {
         bytes.extend_from_slice(&u32::try_from(self.constants.len()).ok()?.to_le_bytes());
         for constant in &self.constants {
             let (tag, value) = match constant {
-                Constant::String(value) => (0, value),
-                Constant::Atom(atom) => (1, &atom.name),
+                Constant::String(value) => (0, value.as_str()),
+                Constant::Atom(atom) => (1, atom.name()),
             };
             bytes.push(tag);
             bytes.extend_from_slice(&u32::try_from(value.len()).ok()?.to_le_bytes());
@@ -29,11 +29,11 @@ impl Bytecode {
             let (&tag, rest) = bytes.split_first()?;
             bytes = rest;
             let len = read_u32(&mut bytes)? as usize;
-            let value = std::str::from_utf8(bytes.get(..len)?).ok()?.to_owned();
+            let value = std::str::from_utf8(bytes.get(..len)?).ok()?;
             bytes = &bytes[len..];
             constants.push(match tag {
-                0 => Constant::String(value),
-                1 => Constant::Atom(Atom { name: value }),
+                0 => Constant::String(value.to_owned()),
+                1 => Constant::Atom(Atom::intern(value).ok()?),
                 _ => return None,
             });
         }

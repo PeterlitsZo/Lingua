@@ -109,9 +109,8 @@ impl<'a> Lexer<'a> {
             }
             self.advance();
         }
-        Ok(Atom {
-            name: self.source[start..self.position].into(),
-        })
+        Atom::intern(&self.source[start..self.position])
+            .map_err(|message| Self::error(message, offset))
     }
 
     fn read_multiline_string(&mut self, start: usize) -> Result<String, Error> {
