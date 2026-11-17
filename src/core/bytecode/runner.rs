@@ -1,8 +1,9 @@
 use std::{borrow::Cow, fs};
 
 use super::{
-    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP,
-    PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
+    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE,
+    MATCH_CONST, MATCH_FALSE, MATCH_NULL, MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL,
+    PUSH_STRING, PUSH_TRUE,
 };
 use crate::core::{Environment, Error, ErrorKind, value::Value};
 
@@ -72,6 +73,45 @@ impl<'a> BytecodeRunner<'a> {
                             .with_source(err)
                     })?;
                     self.stack.push(Value::String(Cow::Owned(contents)));
+                }
+                MATCH_CONST | MATCH_TRUE | MATCH_FALSE | MATCH_NULL => {
+                    let constant = if opcode == MATCH_CONST {
+                        let index = self.read_operand(offset)? as usize;
+                        Some(self.bytecode.constants.get(index).ok_or_else(|| {
+                            Self::invalid_bytecode("Constant index out of bounds", offset)
+                                .with_metadata("index", index.to_string())
+                        })?)
+                    } else {
+                        None
+                    };
+                    let target = self.read_operand(offset)? as usize;
+                    if target < self.pc || target > self.bytecode.code.len() {
+                        return Err(
+                            Self::invalid_bytecode("Invalid forward jump target", offset)
+                                .with_metadata("target", target.to_string()),
+                        );
+                    }
+                    let subject = self
+                        .stack
+                        .last()
+                        .ok_or_else(|| Self::invalid_bytecode("Stack underflow", offset))?;
+                    let matched = match (opcode, constant, subject) {
+                        (MATCH_CONST, Some(Constant::String(pattern)), Value::String(value)) => {
+                            value.as_ref() == pattern.as_str()
+                        }
+                        (MATCH_CONST, Some(Constant::Atom(pattern)), Value::Atom(value)) => {
+                            value.as_ref() == pattern
+                        }
+                        (MATCH_TRUE, _, Value::Boolean(true))
+                        | (MATCH_FALSE, _, Value::Boolean(false))
+                        | (MATCH_NULL, _, Value::Null) => true,
+                        _ => false,
+                    };
+                    if matched {
+                        self.stack.pop();
+                    } else {
+                        self.pc = target;
+                    }
                 }
                 DUP => {
                     let value = self

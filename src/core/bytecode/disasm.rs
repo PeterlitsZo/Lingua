@@ -1,8 +1,9 @@
 use std::fmt::Write;
 
 use super::{
-    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE, POP,
-    PUSH_ATOM, PUSH_FALSE, PUSH_NULL, PUSH_STRING, PUSH_TRUE,
+    Bytecode, CONCAT, Constant, DUP, EQUAL, INCLUDE, JUMP, JUMP_IF_FALSE, LOAD_VARIABLE,
+    MATCH_CONST, MATCH_FALSE, MATCH_NULL, MATCH_TRUE, POP, PUSH_ATOM, PUSH_FALSE, PUSH_NULL,
+    PUSH_STRING, PUSH_TRUE,
 };
 use crate::core::{Error, ErrorKind};
 
@@ -33,6 +34,10 @@ impl Bytecode {
                 POP => ("POP", false),
                 JUMP => ("JUMP", true),
                 INCLUDE => ("INCLUDE", false),
+                MATCH_CONST => ("MATCH_CONST", true),
+                MATCH_TRUE => ("MATCH_TRUE", true),
+                MATCH_FALSE => ("MATCH_FALSE", true),
+                MATCH_NULL => ("MATCH_NULL", true),
                 _ => {
                     return Err(invalid("Unknown opcode", offset)
                         .with_metadata("opcode", format!("0x{opcode:02X}")));
@@ -47,8 +52,17 @@ impl Bytecode {
                 pc += 4;
                 write!(output, "{:width$}", "", width = 16 - name.len()).expect("write to string");
                 match opcode {
-                    PUSH_STRING | PUSH_ATOM | LOAD_VARIABLE => {
-                        write!(output, "#{operand}    ; ").expect("write to string");
+                    PUSH_STRING | PUSH_ATOM | LOAD_VARIABLE | MATCH_CONST => {
+                        write!(output, "#{operand}").expect("write to string");
+                        if opcode == MATCH_CONST {
+                            let bytes = self.code[pc..]
+                                .first_chunk::<4>()
+                                .ok_or_else(|| invalid("Truncated instruction operand", offset))?;
+                            let target = u32::from_le_bytes(*bytes);
+                            pc += 4;
+                            write!(output, ", {target:04}").expect("write to string");
+                        }
+                        output.push_str("    ; ");
                         match self.constants.get(operand as usize) {
                             Some(constant) => {
                                 let (kind, text) = constant.display_parts();
@@ -57,7 +71,7 @@ impl Bytecode {
                             None => output.push_str("invalid constant index"),
                         }
                     }
-                    JUMP | JUMP_IF_FALSE => {
+                    JUMP | JUMP_IF_FALSE | MATCH_TRUE | MATCH_FALSE | MATCH_NULL => {
                         write!(output, "{operand:04}").expect("write to string")
                     }
                     _ => write!(output, "{operand}").expect("write to string"),

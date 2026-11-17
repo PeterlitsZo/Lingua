@@ -20,6 +20,10 @@ const JUMP_IF_FALSE: u8 = 0x0A;
 const POP: u8 = 0x0B;
 const JUMP: u8 = 0x0C;
 const INCLUDE: u8 = 0x0D;
+const MATCH_CONST: u8 = 0x0E;
+const MATCH_TRUE: u8 = 0x0F;
+const MATCH_FALSE: u8 = 0x10;
+const MATCH_NULL: u8 = 0x11;
 
 pub(super) struct Bytecode {
     constants: Vec<Constant>,
