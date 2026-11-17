@@ -4,7 +4,7 @@ Lingua を使うと、ひとつのソースファイルで多言語ドキュメ�
 
 たとえば、次の Lingua ドキュメント `hello.md.lingua` を用意します。
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")

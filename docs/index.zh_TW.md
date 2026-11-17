@@ -4,7 +4,7 @@
 
 例如，以下 Lingua 文件 `hello.md.lingua`：
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")

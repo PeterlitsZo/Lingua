@@ -4,7 +4,7 @@ Mit Lingua verwaltest du mehrsprachige Dokumentation in einer Quelldatei.
 
 Zum Beispiel mit diesem Lingua-Dokument `hello.md.lingua`:
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")

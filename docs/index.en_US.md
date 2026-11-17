@@ -4,7 +4,7 @@ Use Lingua to maintain multilingual documentation in a single source file.
 
 For example, given this Lingua document, `hello.md.lingua`:
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")

@@ -4,7 +4,7 @@ Com o Lingua, você mantém documentação multilíngue em um único arquivo-fon
 
 Por exemplo, com este documento Lingua, `hello.md.lingua`:
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")

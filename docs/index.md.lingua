@@ -28,11 +28,13 @@
   :pt_BR "Por exemplo, com este documento Lingua, `hello.md.lingua`:"
   _ "For example, given this Lingua document, `hello.md.lingua`:")
 
-```text
-\("# \\(match lang")
-\("  :zh_CN \"你好\"")
-\("  _      \"Hello\")")
-```
+\("""
+  | ```
+  | # \(match lang
+  |   :zh_CN "你好"
+  |   _      "Hello")
+  | ```
+""")
 
 \(match lang
   :zh_CN "我们可以通过 Lingua 提供的 `lingua` 工具来生成不同语言的文档："
@@ -302,12 +304,14 @@ lingua hello.md.lingua -v 'name="Ada"' -v lang=:en_US -v \
   :pt_BR "As expressões mais simples são os literais. Por exemplo:"
   _ "The simplest expressions are literals. For example:")
 
-```
-\("\\(\"hello\")")
-\("\\(\"\"\"")
-  | Hello World
+\("""
+  | ```
+  | \("hello")
+  | \("""
+  |   | Hello World
+  | """)
+  | ```
 """)
-```
 
 \(match lang
   :zh_CN "我们也可以使用变量名来渲染变量，如下我们会渲染 `name` 变量的值："
@@ -336,9 +340,11 @@ lingua hello.md.lingua -v 'name="Ada"' -v lang=:en_US -v \
   """
   _ "We can also render a variable by name. This renders the value of `name`:")
 
-```
-\("\\(name)")
-```
+\("""
+  | ```
+  | \(name)
+  | ```
+""")
 
 \(match lang
   :zh_CN "我们支持使用 `match` 来进行匹配，例如："
@@ -353,11 +359,13 @@ lingua hello.md.lingua -v 'name="Ada"' -v lang=:en_US -v \
   :pt_BR "Podemos usar `match` para escolher de acordo com um valor. Por exemplo:"
   _ "We support matching values with `match`. For example:")
 
-```
-\("\\(match lang")
-\("  :zh_CN \"你好\"")
-\("  _      \"Hello\")")
-```
+\("""
+  | ```
+  | \(match lang
+  |   :zh_CN "你好"
+  |   _      "Hello")
+  | ```
+""")
 
 \(match lang
   :zh_CN "它会按照顺序选择对应的分支。其中 `_` 为默认分支，没有匹配时使用这个分支。"

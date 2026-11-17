@@ -4,7 +4,7 @@ Lingua로 하나의 소스 파일에서 다국어 문서를 관리할 수 있습
 
 예를 들어 다음과 같은 Lingua 문서 `hello.md.lingua`가 있다고 합시다.
 
-```text
+```
 # \(match lang
   :zh_CN "你好"
   _      "Hello")
