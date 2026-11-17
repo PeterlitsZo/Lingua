@@ -7,10 +7,22 @@ use crate::cli::Cli;
 
 fn main() -> ExitCode {
     let start = Instant::now();
-    let cli = Cli::parse();
-    let mut timings = core::timing::Timings::new(cli.timings, start);
-    let result = core::run_file(&cli.source, &cli.output, &cli.environment, &mut timings);
-    timings.report();
+    let result = match Cli::parse() {
+        Cli::Run {
+            source,
+            output,
+            environment,
+            timings,
+        } => {
+            let mut timings = core::timing::Timings::new(timings, start);
+            let result = core::run_file(&source, &output, &environment, &mut timings);
+            timings.report();
+            result
+        }
+        Cli::Disasm { path } => {
+            core::disasm::disassemble_file(&path, &mut std::io::stdout().lock())
+        }
+    };
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {

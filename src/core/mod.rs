@@ -2,6 +2,7 @@ mod ast;
 mod atom;
 mod bytecode;
 mod cache;
+pub(crate) mod disasm;
 mod environment;
 pub mod error;
 mod file;

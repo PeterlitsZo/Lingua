@@ -6,7 +6,7 @@ use std::{
     time::UNIX_EPOCH,
 };
 
-use super::{Program, timing::Timings};
+use super::{Error, ErrorKind, Program, timing::Timings};
 
 const MAGIC: &[u8; 8] = b"LINGUA\0\0";
 // Bump for incompatible encoding, instruction, or compiler semantics changes.
@@ -140,4 +140,34 @@ fn resolve_path(path: &Path) -> Option<PathBuf> {
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     Some(resolve_path(parent)?.join(name))
+}
+
+// Inspection reads the recorded metadata without consulting the source file.
+pub(super) fn inspect_header(bytes: &[u8]) -> Result<(String, &[u8]), Error> {
+    let invalid = |message| Error::new(ErrorKind::InvalidBytecode, message);
+    let header = bytes
+        .get(..32)
+        .ok_or_else(|| invalid("Truncated LBC header"))?;
+    if &header[..8] != MAGIC {
+        return Err(invalid("Invalid LBC magic"));
+    }
+    let version = u32::from_le_bytes(header[8..12].try_into().expect("four bytes"));
+    if version != VERSION {
+        return Err(
+            invalid("Unsupported LBC version").with_metadata("version", version.to_string())
+        );
+    }
+    let seconds = u64::from_le_bytes(header[12..20].try_into().expect("eight bytes"));
+    let nanos = u32::from_le_bytes(header[20..24].try_into().expect("four bytes"));
+    let size = u64::from_le_bytes(header[24..32].try_into().expect("eight bytes"));
+    if nanos >= 1_000_000_000 {
+        return Err(invalid("Invalid source timestamp nanoseconds"));
+    }
+    let magic = std::str::from_utf8(MAGIC).expect("ASCII magic");
+    Ok((
+        format!(
+            "Header\n  Magic:         {magic:?}\n  Version:       {version}\n  Source mtime:  {seconds}.{nanos:09} (Unix seconds)\n  Source size:   {size} bytes\n"
+        ),
+        &bytes[32..],
+    ))
 }

@@ -1,5 +1,6 @@
 mod codec;
 mod compiler;
+mod disasm;
 mod runner;
 
 use super::atom::Atom;
