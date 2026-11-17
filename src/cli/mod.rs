@@ -19,12 +19,16 @@ struct Args {
     /// Set a variable
     #[arg(short = 'v', value_name = "NAME=VALUE")]
     variables: Vec<VariableAssignment>,
+    /// Print stage timings and total elapsed time to stderr
+    #[arg(long)]
+    timings: bool,
 }
 
 pub struct Cli {
     pub source: PathBuf,
     pub output: PathBuf,
     pub environment: Environment,
+    pub timings: bool,
 }
 
 impl Cli {
@@ -33,6 +37,7 @@ impl Cli {
             source,
             output,
             variables,
+            timings,
         } = Args::parse();
         if source.extension() != Some(OsStr::new("lingua")) {
             Args::command()
@@ -60,6 +65,7 @@ impl Cli {
             source,
             output,
             environment,
+            timings,
         }
     }
 }

@@ -2,6 +2,7 @@ use super::{
     Environment, Error,
     bytecode::{Bytecode, BytecodeCompiler, BytecodeRunner},
     parser::Parser,
+    timing::Timings,
     value::Value,
 };
 
@@ -14,17 +15,15 @@ impl Program {
         self.bytecode.encode()
     }
 
-    pub(super) fn decode(bytes: &[u8]) -> Option<Self> {
-        Some(Self {
-            bytecode: Bytecode::decode(bytes)?,
-        })
+    pub(super) fn decode(bytes: &[u8], timings: &mut Timings) -> Option<Self> {
+        let bytecode = timings.measure("Cache decode", || Bytecode::decode(bytes))?;
+        Some(Self { bytecode })
     }
 
-    pub(crate) fn compile(source: &str) -> Result<Self, Error> {
-        let ast = Parser::new(source).parse()?;
-        Ok(Self {
-            bytecode: BytecodeCompiler::new().compile(ast)?,
-        })
+    pub(crate) fn compile(source: &str, timings: &mut Timings) -> Result<Self, Error> {
+        let ast = timings.measure("Parse", || Parser::new(source).parse())?;
+        let bytecode = timings.measure("Compile", || BytecodeCompiler::new().compile(ast))?;
+        Ok(Self { bytecode })
     }
 
     pub(crate) fn compile_literal(source: &str) -> Result<Self, Error> {

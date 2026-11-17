@@ -8,6 +8,7 @@ mod file;
 mod lexer;
 mod parser;
 mod program;
+pub(crate) mod timing;
 mod value;
 
 pub use self::error::{Error, ErrorKind};

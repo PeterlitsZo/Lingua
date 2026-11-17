@@ -6,7 +6,7 @@ use std::{
     time::UNIX_EPOCH,
 };
 
-use super::Program;
+use super::{Program, timing::Timings};
 
 const MAGIC: &[u8; 8] = b"LINGUA\0\0";
 // Bump for incompatible encoding, instruction, or compiler semantics changes.
@@ -65,16 +65,18 @@ impl SourceCache {
         Some(Self { path, stamp })
     }
 
-    pub(super) fn load(&self) -> Option<Program> {
-        if !self.safe_directory() || !fs::symlink_metadata(&self.path).ok()?.file_type().is_file() {
-            return None;
-        }
-        let bytes = fs::read(&self.path).ok()?;
+    pub(super) fn load(&self, timings: &mut Timings) -> Option<Program> {
         let header = self.stamp.header();
-        if !bytes.starts_with(&header) {
-            return None;
-        }
-        Program::decode(&bytes[header.len()..])
+        let bytes = timings.measure("Cache read", || {
+            if !self.safe_directory()
+                || !fs::symlink_metadata(&self.path).ok()?.file_type().is_file()
+            {
+                return None;
+            }
+            let bytes = fs::read(&self.path).ok()?;
+            bytes.starts_with(&header).then_some(bytes)
+        })?;
+        Program::decode(&bytes[header.len()..], timings)
     }
 
     pub(super) fn store(&self, program: &Program) {
