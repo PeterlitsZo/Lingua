@@ -111,7 +111,7 @@ impl<'a> BytecodeRunner<'a> {
                         )
                         .with_metadata("offset", offset.to_string()));
                     };
-                    let contents = fs::read_to_string(path.as_ref()).map_err(|err| {
+                    let contents = fs::read_to_string(self.resolve_path(&path)).map_err(|err| {
                         Error::new(ErrorKind::IO, "Cannot read included file as UTF-8")
                             .with_context("include")
                             .with_metadata("path", path.as_ref())
@@ -230,13 +230,17 @@ impl<'a> BytecodeRunner<'a> {
         Ok(self.stack.pop().expect("one value is present"))
     }
 
-    fn render(&self, path: &str, environment: &Environment) -> Result<String, Error> {
+    fn resolve_path(&self, path: &str) -> PathBuf {
         let base = self
             .sources
             .last()
             .and_then(|source| source.parent())
             .unwrap_or(Path::new("."));
-        let path = base.join(path);
+        base.join(path)
+    }
+
+    fn render(&self, path: &str, environment: &Environment) -> Result<String, Error> {
+        let path = self.resolve_path(path);
         let canonical = fs::canonicalize(&path).map_err(|err| {
             Error::new(ErrorKind::IO, "Cannot resolve template path").with_source(err)
         })?;
