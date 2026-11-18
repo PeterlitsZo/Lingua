@@ -151,15 +151,17 @@ impl<'a> Lexer<'a> {
                     marker,
                 )
             })?;
-            let separator = content
-                .chars()
-                .next()
-                .filter(|character| character.is_whitespace())
-                .ok_or_else(|| Self::error("Expected whitespace after '|'", marker + 1))?;
+            let content = match content.chars().next() {
+                None => content,
+                Some(separator) if separator.is_whitespace() => &content[separator.len_utf8()..],
+                Some(_) => {
+                    return Err(Self::error("Expected whitespace after '|'", marker + 1));
+                }
+            };
             if has_line {
                 value.push('\n');
             }
-            value.push_str(&content[separator.len_utf8()..]);
+            value.push_str(content);
             has_line = true;
         }
         Err(Self::error("Unterminated multiline string", start))
